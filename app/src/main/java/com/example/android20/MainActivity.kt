@@ -1,12 +1,14 @@
 package com.example.android20
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.JsonObject
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -19,7 +21,7 @@ class MainActivity : AppCompatActivity() {
 
     interface ApiService {
         @POST("/login")
-        fun register(@Body body: JsonObject): Call<JsonObject>
+        fun login(@Body body: JsonObject): Call<JsonObject>
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,23 +32,32 @@ class MainActivity : AppCompatActivity() {
         val passwordEditText = findViewById<EditText>(R.id.passwordEditText)
         val registerButton = findViewById<Button>(R.id.registerButton)
 
+        val logging = HttpLoggingInterceptor().apply {
+            setLevel(HttpLoggingInterceptor.Level.BODY)
+        }
+
+        val httpClient = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://192.168.0.29:5000")
+            .client(httpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiService::class.java)
+
         registerButton.setOnClickListener {
             val email = emailEditText.text.toString()
             val password = passwordEditText.text.toString()
-
-            val retrofit = Retrofit.Builder()
-                .baseUrl("http://192.168.0.29:5000")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-
-            val apiService = retrofit.create(ApiService::class.java)
 
             val jsonObject = JsonObject().apply {
                 addProperty("username", email)
                 addProperty("password", password)
             }
 
-            apiService.register(jsonObject).enqueue(object : Callback<JsonObject> {
+            apiService.login(jsonObject).enqueue(object : Callback<JsonObject> {
                 override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
                     if (response.isSuccessful && response.body()?.has("id") == true) {
                         val intent = Intent(this@MainActivity, SuccessActivity::class.java)
