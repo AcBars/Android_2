@@ -20,7 +20,7 @@ import retrofit2.http.POST
 class MainActivity : AppCompatActivity() {
 
     interface ApiService {
-        @POST("/login")
+        @POST("/register")
         fun login(@Body body: JsonObject): Call<JsonObject>
     }
 
@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.0.29:5000")
+            .baseUrl("https://takewithme.ru")
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
